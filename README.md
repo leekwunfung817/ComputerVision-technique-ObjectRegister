@@ -1,8 +1,11 @@
+
+
 # ComputerVision-technique-ObjectRegister
 
 This project will run varies of thread, each one have their own functions.
 
 ## config file
+<pre>
 Image configuration file (.icfg)
     id_position.icfg - define captured area align with car-parking position.
         1.red 
@@ -19,16 +22,23 @@ Image configuration file (.icfg)
     ignore.icfg - ignore area. (green as concentrate, black as ignore)
     sys.cfg
         thresholds move area size - size percentage - e.g. 20%
+</pre>
 
 ## Program Main Thread
+
+<pre>
 Boolean is_moving
 run thread 1
 run thread 2
 While haveNewChecking
     run Thread 3 - checking-in or check-out data
 
+</pre>
+
 ## Program Thread 1 - Background extraction
 ### image array with 3 background image - for thread 2
+
+<pre>
 Capture 3 photos into a buffer, each 3 minutes will capture a photo to append to this buffer and remove the eariest one.
 
 Pseudo code
@@ -37,9 +47,12 @@ While loop each 3 minutes
     if !is_moving
         append current capture
         remove eariest capture
+</pre>
 
 ##  Program Thread 2 - Movement capture
 ## extract moving object and save with datetime by folder path - for thread 3
+
+<pre>
 three_image_not_match_matrix = None
 
 While true
@@ -51,11 +64,13 @@ While true
         meta_data = extractMovingObjectAndSaveWithDatetime ( three_image_not_match_matrix )
         similar_images = imageSearch(meta_data)
         analysisAndOutputLog(meta_data)
+</pre>
 
 
 ##  Program Thread 3 - Database communicate
 ### check database table, check-in and check-out record which is nearby the moving datetime - for map display
 
+<pre>
 sleep 3 second
 dead loop until "if (!is_moving)"
 begin_datetime = check_datetime--(seconds) loop until nothing to move (datetime as folder path = have movement)
@@ -63,6 +78,8 @@ end_datetime = check_datetime++(seconds) loop until nothing to move (datetime as
 imagesWithPaths = get image between begin_datetime and end_datetime
 SaveWithFolder( car_id, card_id, imagesWithPaths ) - paths, car_id, card_id
     
+</pre>
+
 ##  Program Thread 4
 ### combine too similiar object image 
 ### and remove old files
