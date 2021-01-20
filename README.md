@@ -4,7 +4,7 @@ This project will run varies of thread, each one have their own functions.
 
 Function list
 <pre>
-1. Capture the moving object which is able to see.
+1. Capture the moving object which is able to see, will skip the remarked irrelevant area.
 2. Simulate the object's movement with timestamp after the object was captured.
 3. Simulate a map to display the location of the captured objects.
 </pre>
@@ -12,7 +12,7 @@ Function list
 config file:
 <pre>
 Image configuration file (.icfg)
-    id_position.icfg - define captured area align with car-parking position.
+    id_position.icfg - define captured area align with car-parking position. (For function 3)
         1.red 
         2.orange 
         3.yellow 
@@ -24,9 +24,11 @@ Image configuration file (.icfg)
         9.black 
         10.white 
         11.gray
-    ignore.icfg - ignore area. (green as concentrate, black as ignore)
-    sys.cfg
-        thresholds move area size - size percentage - e.g. 20%
+    ignore.icfg - ignore area. (green as concentrate, black as ignore) (For function 1)
+    sys.cfg (For function 1)
+        thresholds value - e.g. 20%
+        minimum area pixels - e.g. 30px
+        
 </pre>
 
 ## Program Main Thread
