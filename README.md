@@ -1,10 +1,15 @@
-
-
 # ComputerVision-technique-ObjectRegister
 
 This project will run varies of thread, each one have their own functions.
 
-## config file
+Function list
+<pre>
+1. Capture the moving object which is able to see.
+2. Simulate the object's movement with timestamp after the object was captured.
+3. Simulate a map to display the location of the captured objects.
+</pre>
+
+config file:
 <pre>
 Image configuration file (.icfg)
     id_position.icfg - define captured area align with car-parking position.
@@ -36,8 +41,7 @@ While haveNewChecking
 </pre>
 
 ## Program Thread 1 - Background extraction
-### image array with 3 background image - for thread 2
-
+image array with 3 background image - for thread 2
 <pre>
 Capture 3 photos into a buffer, each 3 minutes will capture a photo to append to this buffer and remove the eariest one.
 
@@ -50,8 +54,7 @@ While loop each 3 minutes
 </pre>
 
 ##  Program Thread 2 - Movement capture
-## extract moving object and save with datetime by folder path - for thread 3
-
+extract moving object and save with datetime by folder path - for thread 3
 <pre>
 three_image_not_match_matrix = None
 
@@ -68,8 +71,7 @@ While true
 
 
 ##  Program Thread 3 - Database communicate
-### check database table, check-in and check-out record which is nearby the moving datetime - for map display
-
+check database table, check-in and check-out record which is nearby the moving datetime - for map display
 <pre>
 sleep 3 second
 dead loop until "if (!is_moving)"
@@ -81,5 +83,5 @@ SaveWithFolder( car_id, card_id, imagesWithPaths ) - paths, car_id, card_id
 </pre>
 
 ##  Program Thread 4
-### combine too similiar object image 
-### and remove old files
+combine too similiar object image and remove old files
+
