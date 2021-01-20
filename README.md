@@ -26,6 +26,8 @@ Image configuration file (.icfg)
         11.gray
     ignore.icfg - ignore area. (green as concentrate, black as ignore) (For function 1)
     sys.cfg (For function 1)
+        section Name - e.g. Left Corner Area
+        section ID - e.g. LCA
         thresholds value - e.g. 20%
         minimum area pixels - e.g. 30px
         
