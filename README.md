@@ -2,7 +2,7 @@
 
 This project will run varies of thread, each one have their own functions.
 
-Function list
+## Function List
 <pre>
 1. Capture the moving object which is able to see, will skip the remarked irrelevant area.
 2. Simulate the object's movement with timestamp after the object was captured.
@@ -26,11 +26,43 @@ Image configuration file (.icfg)
         11.gray
     ignore.icfg - ignore area. (green as concentrate, black as ignore) (For function 1)
     sys.cfg (For function 1)
-        section Name - e.g. Left Corner Area
-        section ID - e.g. LCA
-        thresholds value - e.g. 20%
-        minimum area pixels - e.g. 30px
+        Camera Name - e.g. Left Corner Area
+        Camera ID - e.g. LCA
         
+        background - minimum area pixels - e.g. 30 px
+        background - capture per second - e.g. 180 sec
+        background - movement timeout - e.g. 30 sec
+        
+        movement - minimum area pixels - e.g. 30px
+        movement - thresholds value - e.g. 20%
+        movement - video timeout - e.g. 10 sec
+        
+        db - query frequent - e.g. 10 sec
+        remove - check frequent - e.g. 180 sec
+        
+        red_id= - e.g. position1
+        red_name= - e.g. Position 1
+        orange_id=
+        orange_name=
+        yellow_id=
+        yellow_name=
+        green_id=
+        green_name=
+        blue_id=
+        blue_name=
+        purple_id=
+        purple_name=
+        pink_id=
+        pink_name=
+        brown_id=
+        brown_name=
+        black_id=
+        black_name=
+        white_id=
+        white_name=
+        gray_id=
+        gray_name=
+
 </pre>
 
 ## Program Main Thread
@@ -57,7 +89,7 @@ While loop each 3 minutes
         remove eariest capture
 </pre>
 
-##  Program Thread 2 - Movement capture
+##  Program Thread 2 - Movement capture and save
 extract moving object and save with datetime by folder path - for thread 3
 <pre>
 three_image_not_match_matrix = None
@@ -74,7 +106,7 @@ While true
 </pre>
 
 
-##  Program Thread 3 - Database communicate
+##  Program Thread 3 - Record alignment and database communication
 check database table, check-in and check-out record which is nearby the moving datetime - for map display
 <pre>
 sleep 3 second
@@ -83,7 +115,7 @@ begin_datetime = check_datetime--(seconds) loop until nothing to move (datetime 
 end_datetime = check_datetime++(seconds) loop until nothing to move (datetime as folder path = have movement)
 imagesWithPaths = get image between begin_datetime and end_datetime
 SaveWithFolder( car_id, card_id, imagesWithPaths ) - paths, car_id, card_id
-    
+alignRecordAndMovement()
 </pre>
 
 ##  Program Thread 4
