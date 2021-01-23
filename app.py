@@ -1,12 +1,27 @@
 
+'''
+cd /Users/leekwunfung/Desktop/ObjExtractor/
+python3 app.py
+
+'''
+
+import ProgramThread1BackgroundExtraction
 import ProgramThread2MovementCapture
 import cv2
 
-arr = {
-	1:cv2.imread('1.jpg'),
-	2:cv2.imread('2.jpg'),
-	3:cv2.imread('3.jpg')
-}
 
-com = cv2.imread('a.jpg')
-(originRect,filteredAlpha) = ProgramThread2MovementCapture.run(arr,com)
+def OnCapture(arr,com,frame):
+	# print('Received capture:',frame.shape)
+	(originRect,filteredAlpha,moving_objects) = ProgramThread2MovementCapture.run(arr,frame)
+
+	# cv2.imshow('originRect', originRect)
+	# cv2.imshow('filteredAlpha', filteredAlpha)
+	# cv2.waitKey(1)
+
+	return len(moving_objects) > 0
+
+
+
+if __name__ == "__main__":
+	ProgramThread1BackgroundExtraction.run(OnCapture)
+	pass
