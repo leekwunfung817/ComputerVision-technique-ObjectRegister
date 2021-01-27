@@ -14,71 +14,62 @@ import matplotlib.pyplot as plt
 from imutils.video import VideoStream
 import imutils
 
-# import app
+import Denoise
+import Debug
+
 debug = False
+minDiff = 50
+
 def isSeemDiff(img1, img2):
 	res = cv2.absdiff(img1, img2)
 	res = res.astype(np.uint8)
-	percentage = (np.count_nonzero(res) * 100)/ res.size
-	return (percentage,res)
+	return res
 
-def ThreeAlsoDiff(background,com):
-	img=background
-	(h,w,d)=background.shape
+def ThreeAlsoDiff(background,frame):
+	img = None
+	rgbDiffMask = None
+	if len(background.shape)==4:
+		for x in background:
+			if rgbDiffMask is None:
+				rgbDiffMask = isSeemDiff(x, frame)
+			else:
+				rgbDiffMask = rgbDiffMask + isSeemDiff(x, frame)
+		img=background[0]
+	elif len(background.shape)==3:
+		rgbDiffMask = isSeemDiff(background, frame)
+		img=background
+	(h,w,d)=img.shape
+	max_bri=np.max(rgbDiffMask)
 
-	buf=None
-	# for img in three_img:
-	# img=three_img[i]
-	# img = cv2.GaussianBlur(img, (21, 21), 0)
-	# print(img.shape)
-	# cv2.imshow('image',img)
-	percentage,diff = isSeemDiff(img, com)
-	if percentage<20:
-		ret=com.copy()
-		cv2.rectangle(ret, (0,0), (w, h), (0, 0, 0), -1)
-		return ret
-	else:
-		print('something move ',percentage,'%')
-		
-	# cv2.imshow('diff', diff)
-	if debug:
-		cv2.imwrite('a_'+str(i)+'.jpg',diff)
-	diff = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-	if debug:
-		cv2.imwrite('aa_'+str(i)+'.jpg',diff)
-
-	# thresh_val,thresh = cv2.threshold(diff,128,255,cv2.THRESH_BINARY)
-	thresh_val,thresh = cv2.threshold(diff,np.average(diff),255,cv2.THRESH_BINARY)
-	# thresh_val,thresh = cv2.threshold(diff,25,255,cv2.THRESH_BINARY)
-	# thresh_val,thresh = cv2.threshold(diff,100,255,cv2.THRESH_BINARY)
-
-	# cv2.imshow('diff', diff)
-
-	if debug:
-		cv2.imwrite('b_'+str(i)+'.jpg',thresh)
-	if buf is None:
-		buf=thresh
-	else:
-		buf = cv2.bitwise_and(buf, thresh)
-
+	# filter frame that have not much movement
+	if max_bri<minDiff:
+		ret = Denoise.fillBlack(frame)
+		gray_ret = cv2.cvtColor(rgbDiffMask, cv2.COLOR_BGR2GRAY)
+		return gray_ret,ret,gray_ret,False
 	
-	if debug:
-		cv2.imwrite('bitwise_and.jpg',buf)
-	return buf
+	# diff grey to white black
+	greyDiffMask = cv2.cvtColor(rgbDiffMask, cv2.COLOR_BGR2GRAY)
+	thresh_val,greyDiffMask = cv2.threshold(greyDiffMask,minDiff,255,cv2.THRESH_BINARY)
 
+	# fill in color for moving area
+	g_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	colorMask = cv2.bitwise_and(g_frame, greyDiffMask)
+	
+	return colorMask,rgbDiffMask,greyDiffMask,True
+
+# area / height / weight
+min_pixels = 300
 def Filtering(thresh):
 	cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 	cnts = imutils.grab_contours(cnts)
 	for c in cnts:
+		(x, y, w, h) = cv2.boundingRect(c)
 		# if the contour is too small
-		if cv2.contourArea(c) < 600:
+		if cv2.contourArea(c) < min_pixels:
+		 # or w < min_pixels or h < min_pixels:
 			# draw too small object to image
 			cv2.drawContours(thresh, [c], -1, (0,0,0), -1)
 			continue
-	# if debug:
-	# 	cv2.imwrite('e_'+str(i)+'.jpg',frame)
-	# if debug:
-	# 	cv2.imwrite('f_'+str(i)+'.jpg',thresh)
 	return thresh
 
 def ObjectRecting(origin,thresh):
@@ -86,51 +77,34 @@ def ObjectRecting(origin,thresh):
 	objs = []
 	cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 	cnts = imutils.grab_contours(cnts)
+	i=0
 	for c in cnts:
 		# compute the bounding box for the contour, draw it on the frame,
 		# and update the text
 		(x, y, w, h) = cv2.boundingRect(c)
 		cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-		objs.append(frame[y:y+h,x:x+w])
+		objs.append(origin[y:y+h,x:x+w])
 		text = "Occupied"
+		i+=1
 	return (frame,objs)
 
 def BiggerPixels(thresh):
 	# pixels make bigger
-	thresh = cv2.dilate(thresh, None, iterations=10)
-
-	# if debug: 
-	# 	cv2.imwrite('g_'+str(i)+'.jpg',thresh)
+	thresh = cv2.dilate(thresh, None, iterations=30)
 	return thresh
 	
-def run(img,com):
-	move_areas = ThreeAlsoDiff(img,com.copy())
-	if debug:
-		cv2.imwrite('move_areas.jpg',move_areas)
-
-	moveMask = Filtering(move_areas)
-	# cv2.imwrite('filteredAlpha_1.jpg',cv2.bitwise_or(com, com, mask=moveMask))
-
-	moveMask = BiggerPixels(moveMask)
-	if debug:
-		cv2.imwrite('moveMask.jpg',moveMask)
-
-	originRect,objs = ObjectRecting(com,moveMask)
-
-	# if debug:
-	# cv2.imwrite('originRect.jpg',originRect)
-	# cv2.imshow('originRect.jpg',originRect)
-	
-	filteredAlpha = cv2.bitwise_or(com, com, mask=moveMask)
-	# if debug: 
-	# cv2.imwrite('filteredAlpha.jpg',filteredAlpha)
-	# cv2.imshow('filteredAlpha.jpg',filteredAlpha)
-
-	cv2.waitKey(1)
-	# return (move_areas,moveMask,originRect,filteredAlpha)
-	return (originRect,filteredAlpha,objs)
-
-
+def run(background,com):
+	debug_1 = False
+	mask=[]
+	move_areas,rgb_diff,diff,is_moving = ThreeAlsoDiff(background,com.copy())
+	if is_moving:
+		diff = Filtering(diff)
+		diff = BiggerPixels(diff)
+		originRect,objs = ObjectRecting(com,diff)
+		filteredAlpha = cv2.bitwise_and(com, com, mask=diff)
+		return (originRect,filteredAlpha,diff,objs)
+	black_img=Denoise.fillBlack(com)
+	return (com,black_img,cv2.cvtColor(black_img,cv2.COLOR_RGB2GRAY),[])
 
 '''
 cd /Users/leekwunfung/Desktop/ObjExtractor
@@ -138,7 +112,6 @@ python3 ProgramThread2MovementCapture.py
 
 '''
 if __name__ == "__main__":
-	import Denoise
 	(originRect,filteredAlpha,objs) = run(
 		Denoise.run( cv2.imread('1.jpg') ),
 		Denoise.run( cv2.imread('a.jpg') )
