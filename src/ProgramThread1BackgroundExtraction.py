@@ -32,7 +32,6 @@ var['had_stop'] = None
 
 var['lastCaptureTime'] = None
 var['lastMovingTime'] = None
-var['lastMovingMovie'] = None
 var['lastMovingStage'] = None
 
 var['pre_bg'] = None
@@ -93,39 +92,36 @@ def accumulateBackgroundCapturing(okay, frame):
 	if var['is_moving']:
 		var['lastMovingTime'] = time.time()
 		var['lastMovingStage'] = 'MV' # Moving
-		Debug.log('2.Something moving')
+		if config['debug_t1']:
+			Debug.log('2.Something moving')
 		return False
 	elif var['lastMovingTime'] != None:
 		
 		if (time.time() - var['lastMovingTime'])<config['backgroundMovementTimeout']:
-			Debug.log('2.1 Movement timeout at'+str(config['backgroundMovementTimeout']-(time.time() - var['lastMovingTime'])))
+			if config['debug_t1']:
+				Debug.log('2.1 Movement timeout at'+str(config['backgroundMovementTimeout']-(time.time() - var['lastMovingTime'])))
 			var['lastMovingStage'] = 'TO' # Timeout
 			return False
 		else:
-			Debug.log('2.2 Moving stopped!!!')
-			var['lastMovingStage'] = 'MD' # Moved
-			
-			var['lastMovingMovie'] = None
+			if config['debug_t1']:
+				Debug.log('2.2 Moving stopped!!!')
+			var['lastMovingStage'] = 'MD' # Moved			
 			var['lastMovingTime'] = None
-
-		# if var['lastMovingStage'] == 'MV':
-		# 	var['lastMovingMovie'] = WriteVideo(var['lastMovingMovie'],frame,'VideoMovement')
-		# elif var['lastMovingStage'] == 'TO':
-		# 	var['lastMovingMovie'] = WriteVideo(var['lastMovingMovie'],frame,'VideoMovement',capture=False)
-		# elif var['lastMovingStage'] == 'MD':
-		# 	var['lastMovingMovie'] = WriteVideo(var['lastMovingMovie'],frame,'VideoMovement',finish=True,capture=False)
 
 	# 2. Stop capture the background when too high frequent
 	if var['lastCaptureTime']==None:
 		var['lastCaptureTime'] = time.time()
-		Debug.log('3.initialise capture time')
+		if config['debug_t1']:
+			Debug.log('3.initialise capture time')
 	elif (time.time() - var['lastCaptureTime'])<config['backgroundPerCapture']:
 		# for background array appending (situation: last capture timeout)
 		# Debug.log('3.Capture too high frequent, timeout at '+str(config['backgroundPerCapture']-(time.time() - var['lastCaptureTime']))+' second')
 		return False
 	else:
 		var['lastCaptureTime'] = None
-		Debug.log('3.Capture correctly, background len:'+str(len(var['background'])))
+
+		if config['debug_t1']:
+			Debug.log('3.Capture correctly, background len:'+str(len(var['background'])))
 		var['lastCaptureTime'] = time.time()
 		if len(var['background'])>3:
 			cv2.imwrite('bg/'+dts()+'.jpg', var['background'][0])

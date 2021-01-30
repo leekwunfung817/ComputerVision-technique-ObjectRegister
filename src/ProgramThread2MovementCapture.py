@@ -25,6 +25,7 @@ exec('config = '+sys.argv[0].replace('.py','')+'.config')
 
 def isSeemDiff(img1, img2,reverse=False):
 	res = cv2.absdiff(img1, img2)
+
 	res = res.astype(np.uint8)
 	if reverse:
 		cv2.bitwise_not(res)
@@ -47,12 +48,14 @@ def ThreeAlsoSame(background,frame):
 				sameMask = cv2.bitwise_and( sameMask, isSeemDiff(x, frame, True) )
 		img=background[0]
 
+
 	# background 
 	elif len(background.shape)==3:
 		background = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
 		frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		sameMask = isSeemDiff(background, frame, True)
 		img=background
+
 	(h,w,d)=img.shape
 	
 	# filter frame that have not much same
@@ -78,11 +81,16 @@ def ThreeAlsoDiff(background,frame):
 	rgbDiffMask = None
 	if len(background.shape)==4:
 		for x in background:
+			if config['debug_diff']: 
+				cv2.imshow('compare from',x)
+				cv2.imshow('compare to',frame)
+				cv2.waitKey(1)
 			if rgbDiffMask is None:
 				rgbDiffMask = isSeemDiff(x, frame)
 			else:
-				rgbDiffMask = rgbDiffMask + isSeemDiff(x, frame)
+				rgbDiffMask = cv2.bitwise_and( rgbDiffMask , isSeemDiff(x, frame) )
 		img=background[0]
+		if config['debug_diff']: cv2.imshow('rgbDiffMask',rgbDiffMask);cv2.waitKey(1)
 	elif len(background.shape)==3:
 		rgbDiffMask = isSeemDiff(background, frame)
 		img=background
