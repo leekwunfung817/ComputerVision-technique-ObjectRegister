@@ -10,7 +10,13 @@ import Denoise
 import Debug
 import datetime
 
+import sys
+sys.path.insert(1, '../bin')
+exec('import '+sys.argv[0].replace('.py',''))
+exec('config = '+sys.argv[0].replace('.py','')+'.config')
+
 import numpy
+
 
 fail_count = 0
 isIPCam = 0
@@ -21,22 +27,19 @@ com = None
 var = {}
 
 var['is_moving'] = None
+var['had_object'] = None
+var['had_stop'] = None
 
 var['lastCaptureTime'] = None
 var['lastMovingTime'] = None
+var['lastMovingMovie'] = None
+var['lastMovingStage'] = None
 
 var['pre_bg'] = None
 var['bg'] = None
 
 var['background'] = []
-backgroundMovementTimeout = 3
-backgroundPerCapture = 10
-
-ip_cam = '192.168.1.197'
-
-ignore = cv2.imread('ignore.icfg.png')
-
-id_position = cv2.imread('id_position.icfg.png')
+var['movingBackground'] = []
 
 # id_position.icfg - define captured area align with car-parking position. (For function 3)
 #     1.red
@@ -75,47 +78,74 @@ gray = (128,128,128)
 # white_extract = 
 # gray_extract = 
 
+def dts():
+	return datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 
+# (Process 1) run each frame
 def immediateBackgroundCapturing(okay, frame):
 	# background.append(frame)
 	var['pre_bg'] = frame
 	return True
 
+# (Process 2) run when buffer have three background images. Only for stopped stage.
 def accumulateBackgroundCapturing(okay, frame):
 	# 1. Stop capturing background when something moving
 	if var['is_moving']:
 		var['lastMovingTime'] = time.time()
+		var['lastMovingStage'] = 'MV' # Moving
 		Debug.log('2.Something moving')
 		return False
 	elif var['lastMovingTime'] != None:
 		
-		if (time.time() - var['lastMovingTime'])<backgroundMovementTimeout:
-			Debug.log('2.1 Movement timeout at'+str(backgroundMovementTimeout-(time.time() - var['lastMovingTime'])))
+		if (time.time() - var['lastMovingTime'])<config['backgroundMovementTimeout']:
+			Debug.log('2.1 Movement timeout at'+str(config['backgroundMovementTimeout']-(time.time() - var['lastMovingTime'])))
+			var['lastMovingStage'] = 'TO' # Timeout
 			return False
 		else:
 			Debug.log('2.2 Moving stopped!!!')
+			var['lastMovingStage'] = 'MD' # Moved
+			
+			var['lastMovingMovie'] = None
 			var['lastMovingTime'] = None
+
+		# if var['lastMovingStage'] == 'MV':
+		# 	var['lastMovingMovie'] = WriteVideo(var['lastMovingMovie'],frame,'VideoMovement')
+		# elif var['lastMovingStage'] == 'TO':
+		# 	var['lastMovingMovie'] = WriteVideo(var['lastMovingMovie'],frame,'VideoMovement',capture=False)
+		# elif var['lastMovingStage'] == 'MD':
+		# 	var['lastMovingMovie'] = WriteVideo(var['lastMovingMovie'],frame,'VideoMovement',finish=True,capture=False)
 
 	# 2. Stop capture the background when too high frequent
 	if var['lastCaptureTime']==None:
 		var['lastCaptureTime'] = time.time()
 		Debug.log('3.initialise capture time')
-	elif (time.time() - var['lastCaptureTime'])<backgroundPerCapture:
+	elif (time.time() - var['lastCaptureTime'])<config['backgroundPerCapture']:
 		# for background array appending (situation: last capture timeout)
-		# Debug.log('3.Capture too high frequent, timeout at '+str(backgroundPerCapture-(time.time() - var['lastCaptureTime']))+' second')
+		# Debug.log('3.Capture too high frequent, timeout at '+str(config['backgroundPerCapture']-(time.time() - var['lastCaptureTime']))+' second')
 		return False
 	else:
 		var['lastCaptureTime'] = None
 		Debug.log('3.Capture correctly, background len:'+str(len(var['background'])))
 		var['lastCaptureTime'] = time.time()
 		if len(var['background'])>3:
-			cv2.imwrite('bg/'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S')+'.jpg', var['background'][0])
+			cv2.imwrite('bg/'+dts()+'.jpg', var['background'][0])
 			var['background'] = var['background'][1:]
 		var['background'].append(frame)
-		Debug.log('3.1. background len:'+str(len(var['background'])))
+		# Debug.log('3.1. background len:'+str(len(var['background'])))
 	return True
-	
-def inputFrame(okay, frame, callback, accumulateCallback):
+
+# (Process 3) run when buffer have three background images. Only for moving stage.
+def movingBackgroundCapturing(okay, frame):
+	return True
+
+
+def inputFrame(okay, frame, callbacks):
+
+	OnCapture=callbacks['OnCapture']
+	accumulateCapture=callbacks['accumulateCapture']
+	movingCapture=callbacks['movingCapture']
+
+	var['frame'] = frame
 	(h,w,d)=frame.shape
 	frame = Denoise.run(frame)
 	if not okay:
@@ -123,49 +153,59 @@ def inputFrame(okay, frame, callback, accumulateCallback):
 		if fail_count==3:
 			exit()
 
+	# (Process 1)
 	if var['pre_bg'] is not None:
-		var['is_moving'] = callback(var['pre_bg'],frame)
-		if var['is_moving']:
-			Debug.log('background len '+str(len(var['background'])))
+		var['is_moving'] = OnCapture(var)
+		# if var['is_moving']:
+			# Debug.log('background len '+str(len(var['background'])))
 	
+	# (Process 2)
 	if len(var['background'])>=3:
-		var['had_object'] = accumulateCallback(var['background'],frame)
-		if var['had_object']:
-			Debug.log('b:had_object')
-			pass
+		var['had_object'] = accumulateCapture(var)
+		# if var['had_object']:
+		# 	Debug.log('b:had_object')
+		# 	pass
 
-	succeed = False
+	# (Process 3)
+	if len(var['movingBackground'])>=3:
+		var['had_stop'] = movingCapture(var)
+
+	# succeed = False
+	# (Process 1)
 	succeed = immediateBackgroundCapturing(okay, frame)
+	# (Process 2)
 	succeed = accumulateBackgroundCapturing(okay, frame)
-
+	# (Process 3)
+	succeed = movingBackgroundCapturing(okay, frame)
 
 
 	# for background array appending (situation: start up)
 	# initialise the background buffer
 
-def IPCam(callback):
+def IPCam():
 	'''
 "C:/Users/Administrator/AppData/Local/Programs/Python/Python36/python" app.py
 "C:/Users/Administrator/AppData/Local/Programs/Python/Python36/Scripts/pip3.6" install opencv-python
 	'''
 	# cap = cv2.VideoCapture('rtsp://admin:yRpvx@192.168.1.197')
-	return cv2.VideoCapture('rtsp://admin:@'+ip_cam)
+	return cv2.VideoCapture('rtsp://admin:@'+config['ip_cam'])
 
-def webcam(callback):
+def webcam():
 	return cv2.VideoCapture(0)
+
 import os
 
-def run(callback,accumulateCallback):
-	if isIPCam:
-		cap = IPCam(callback)
+def run(callbacks):
+	if config['isIPCam']>0:
+		cap = IPCam()
 	else:
-		cap = webcam(callback)
+		cap = webcam()
 	while True:
 		okay, frame = cap.read()
-		frame = cv2.bitwise_and(frame,ignore)
-		if not os.path.isfile('curDemo.png'):
-			cv2.imwrite('curDemo.png',frame)
-		inputFrame(okay, frame, callback, accumulateCallback)
+		frame = cv2.bitwise_and(frame,config['ignore'])
+		# if not os.path.isfile('curDemo.png'):
+		# 	cv2.imwrite('curDemo.png',frame)
+		inputFrame(okay, frame, callbacks)
 	pass
 
 if __name__ == "__main__":

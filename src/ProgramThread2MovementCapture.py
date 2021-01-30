@@ -17,13 +17,61 @@ import imutils
 import Denoise
 import Debug
 
-debug = False
-minDiff = 50
+import sys
+sys.path.insert(1, '../bin')
+exec('import '+sys.argv[0].replace('.py',''))
+exec('config = '+sys.argv[0].replace('.py','')+'.config')
 
-def isSeemDiff(img1, img2):
+
+def isSeemDiff(img1, img2,reverse=False):
 	res = cv2.absdiff(img1, img2)
 	res = res.astype(np.uint8)
+	if reverse:
+		cv2.bitwise_not(res)
 	return res
+
+def ThreeAlsoSame(background,frame):
+	rgbFrame = frame.copy()
+	frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+	img = None
+	sameMask = None
+
+	# array background 
+	if len(background.shape)==4:
+		for x in background:
+			x = cv2.cvtColor(x, cv2.COLOR_BGR2GRAY)
+			if sameMask is None:
+				sameMask = isSeemDiff(x, frame, True)
+			else:
+				sameMask = cv2.bitwise_and( sameMask, isSeemDiff(x, frame, True) )
+		img=background[0]
+
+	# background 
+	elif len(background.shape)==3:
+		background = cv2.cvtColor(background, cv2.COLOR_BGR2GRAY)
+		frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+		sameMask = isSeemDiff(background, frame, True)
+		img=background
+	(h,w,d)=img.shape
+	
+	# filter frame that have not much same
+	max_bri=np.max(sameMask)
+	if max_bri<config['minDiff']:
+		# return black frame
+		ret = Denoise.fillBlack(frame)
+		gray_ret = cv2.cvtColor(sameMask, cv2.COLOR_BGR2GRAY)
+		return gray_ret,ret,gray_ret,False
+	
+	# diff grey to white black
+	minSame=config['minDiff']
+	thresh_val,sameMask = cv2.threshold(sameMask,minSame,255,cv2.THRESH_BINARY)
+
+	# fill in color for moving area
+	colorMask = cv2.bitwise_and(rgbFrame, sameMask)
+	
+	return colorMask,sameMask,True
+
 
 def ThreeAlsoDiff(background,frame):
 	img = None
@@ -39,17 +87,17 @@ def ThreeAlsoDiff(background,frame):
 		rgbDiffMask = isSeemDiff(background, frame)
 		img=background
 	(h,w,d)=img.shape
-	max_bri=np.max(rgbDiffMask)
 
 	# filter frame that have not much movement
-	if max_bri<minDiff:
+	max_bri=np.max(rgbDiffMask)
+	if max_bri<config['minDiff']:
 		ret = Denoise.fillBlack(frame)
 		gray_ret = cv2.cvtColor(rgbDiffMask, cv2.COLOR_BGR2GRAY)
 		return gray_ret,ret,gray_ret,False
 	
 	# diff grey to white black
 	greyDiffMask = cv2.cvtColor(rgbDiffMask, cv2.COLOR_BGR2GRAY)
-	thresh_val,greyDiffMask = cv2.threshold(greyDiffMask,minDiff,255,cv2.THRESH_BINARY)
+	thresh_val,greyDiffMask = cv2.threshold(greyDiffMask,config['minDiff'],255,cv2.THRESH_BINARY)
 
 	# fill in color for moving area
 	g_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -57,16 +105,14 @@ def ThreeAlsoDiff(background,frame):
 	
 	return colorMask,rgbDiffMask,greyDiffMask,True
 
-# area / height / weight
-min_pixels = 300
 def Filtering(thresh):
 	cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 	cnts = imutils.grab_contours(cnts)
 	for c in cnts:
 		(x, y, w, h) = cv2.boundingRect(c)
 		# if the contour is too small
-		if cv2.contourArea(c) < min_pixels:
-		 # or w < min_pixels or h < min_pixels:
+		if cv2.contourArea(c) < config['min_pixels']:
+		 # or w < config['min_pixels'] or h < config['min_pixels']:
 			# draw too small object to image
 			cv2.drawContours(thresh, [c], -1, (0,0,0), -1)
 			continue
@@ -94,7 +140,6 @@ def BiggerPixels(thresh):
 	return thresh
 	
 def run(background,com):
-	debug_1 = False
 	mask=[]
 	move_areas,rgb_diff,diff,is_moving = ThreeAlsoDiff(background,com.copy())
 	if is_moving:
