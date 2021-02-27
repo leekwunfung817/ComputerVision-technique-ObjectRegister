@@ -17,6 +17,7 @@ https://www.python.org/downloads/release/python-364/
 https://github.com/leekwunfung817/ComputerVision-technique-ObjectRegister
 
 '''
+
 import sys
 sys.path.insert(1, '../bin')
 py_name = sys.argv[0]

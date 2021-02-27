@@ -32,6 +32,7 @@ def reloadCapture():
 def CaptureLoop(callback):
 	cap = None
 	while True:
+		cv2.waitKey(1)
 		while cap is None:
 			cap = reloadCapture()
 		okay, frame = cap.read()

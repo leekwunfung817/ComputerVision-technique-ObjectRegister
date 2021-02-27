@@ -50,7 +50,7 @@ def process(var):
 	if config['p3_debug']:
 		if config['debug_flow']:print('p3_MvCapture 2.2')
 		cv2.imshow('p3 fgmask', fgmask)
-		cv2.waitKey(1)
+		
 
 	if config['debug_flow']:
 		print('p3_MvCapture 3')

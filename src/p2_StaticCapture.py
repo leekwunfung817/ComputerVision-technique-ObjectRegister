@@ -15,13 +15,15 @@ import cv2
 # pre-define method 
 # movement
 def whenMoving(var):
-	if config['p2_debug_flow']:func_any.log('P2.Something moving')
+	# if config['p2_debug_flow']:
+	func_any.log('P2.Something moving')
 	if config['debug_video']:func_any.log('P2.Video recording')
 	var['lastMovingTime'] = time.time()
 	var['lastMovingStage'] = 'MV' # Moving
 	return False
 def afterMoved(var):
-	if config['p2_debug_flow']:func_any.log('P2.1 Movement timeout at'+str(config['backgroundMovementTimeout']-(time.time() - var['lastMovingTime'])))
+	# if config['p2_debug_flow']:
+	func_any.log('P2.1 Movement timeout at'+str(config['backgroundMovementTimeout']-(time.time() - var['lastMovingTime'])))
 	if config['debug_video']:func_any.log('P2.1 Video will stop at'+str(config['backgroundMovementTimeout']-(time.time() - var['lastMovingTime'])))
 	var['lastMovingStage'] = 'TO' # Timeout
 	return False
@@ -47,9 +49,10 @@ def delayTimeoutCapture(var):
 	if config['p2_debug_flow']:
 		func_any.log('P2.3.Capture correctly, background len:'+str(len(var['background'])))
 	var['lastCaptureTime'] = time.time()
-	if len(var['background'])>3:
-		cv2.imwrite('bg/'+func_any.dts()+'.jpg', var['background'][0])
+	if len(var['background'])>=4:
+		# cv2.imwrite('bg/'+func_any.dts()+'.jpg', var['background'][0])
 		var['background'] = var['background'][1:]
+	# print('bgl:',len(var['background']))
 	var['background'].append(var['frame'])
 	# func_any.log('3.1. background len:'+str(len(var['background'])))
 	# allow pass
@@ -75,21 +78,24 @@ def accumulateBackgroundCapturing(var):
 		delayTimeoutCapture(var)
 	return True
 
+def objsToDemo(moving_objects):
+	# for x in moving_objects:
+	# 	print(x)
+	pass
+
 # (Process 2) three layers accumulate callback (stop mode)
 def HaveObject(var):
-
-	background=var['background']
-	frame=var['frame']
-	(originRect,filteredAlpha,objectMask,moving_objects) = func_ImgDiff.run(numpy.array(background),frame)
+	objs = func_ImgDiff.compareForMovementData(numpy.array(var['background']),var['frame'],var['com'],config['p2_dilate_enlarge'],config['p2_minDiff'])
+	(originRect,filteredAlpha,objectMask,moving_objects) = objs
 
 	if config['p2_demo']:
+		objsToDemo(moving_objects)
 		cv2.imshow('HaveObject - originRect',originRect)
 		cv2.imshow('HaveObject - moveMask',objectMask)
 		cv2.imshow('HaveObject',cv2.hconcat([originRect,filteredAlpha]))
-		cv2.waitKey(1)
+		
 
-	# if config['debug_video']:
-	# 	func_any.log('P2.Video Capture check needs')
+	# make decidion for write video or not
 	func_video.WriteVideo2(var,var['frame'],'VideoMovement')
 	func_video.WriteVideo2(var,originRect,'VideoObjects')
 	func_video.WriteVideo2(var,filteredAlpha,'VideoMovement_filteredAlpha')
@@ -99,8 +105,10 @@ def HaveObject(var):
 	return len(moving_objects) > 0
 
 def process(var):
+	config['process']=2
 	# (Process 2) # Step 2 - compare between background and current capture ( main python app.py )
 	if len(var['background'])>=3:
+		func_any.log('P2.enough 3 background frame')
 		var['had_object'] = HaveObject(var)
 
 	if var['had_object']:
@@ -108,3 +116,4 @@ def process(var):
 
 	# (Process 2) # Step 3 - process the background buffer ( current python t1.py )
 	succeed = accumulateBackgroundCapturing(var)
+	

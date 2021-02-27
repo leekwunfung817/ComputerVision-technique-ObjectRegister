@@ -3,16 +3,23 @@ import imutils
 import numpy as np
 
 def toGray(mask):
-	return cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+	if len(mask.shape)==3:
+		return cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+	return mask
 
 def toRGB(mask):
-	return cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+	if len(mask.shape)==2:
+		return cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+	return mask
 
 # for gray
 def Binarization(mask,min_brightness=None,max_brightness=255):
 	if min_brightness is None:
 		min_brightness = np.average(mask)
+
+	
 	thresh_val,mask = cv2.threshold(mask,min_brightness,255,cv2.THRESH_BINARY)
+
 	return mask
 
 # ignore all things, just fill whole image black
@@ -27,10 +34,18 @@ def fillBlack(img,reference=None):
 	return ret
 
 # for gray only
-kernel = np.ones((17,17),np.uint8)
+kernel = np.ones((10,10),np.uint8)
 def Filtering(thresh):
 	# pixels make smaller then enlarge
-	thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+	cv2.imshow('a thresh',thresh)
+	thresh = cv2.erode(thresh,kernel,iterations=1)
+	cv2.imshow('b thresh',thresh)
+	thresh = cv2.dilate(thresh,kernel,iterations=15)
+	cv2.imshow('c thresh',thresh)
+	# thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+	
+	
+
 	return thresh
 
 # def Filtering(thresh,min_pixels):
@@ -49,8 +64,9 @@ def Filtering(thresh):
 # for gray only
 def BiggerPixels(thresh, iterations=30):
 	# pixels make bigger
-	thresh = cv2.dilate(thresh, None, iterations)
-	return thresh
+	result = cv2.dilate(thresh, None, iterations)
+
+	return result
 
 # def GroupDiff(thresh,min_pixels):
 	# Filtering(thresh,min_pixels)
