@@ -72,9 +72,15 @@ var['bg'] = None
 var['background'] = []
 var['movingBackground'] = []
 
+var['movingCoor'] = {}
+# var['movingCoor_lostTime'] = {}
+# var['last_centerCoors'] = None
+
 # (Process 3) run when buffer have three background images. Only for moving stage.
 var['mvBg'] = {}
 var['lastMvBg'] = None
+
+
 
 import func_camera
 
@@ -97,4 +103,4 @@ def OnCapture(frame):
 	if config['p3']:
 		p3_MvCapture.process(var)
 
-func_camera.CaptureLoop(OnCapture)
+func_camera.CaptureLoop(OnCapture,0.3)

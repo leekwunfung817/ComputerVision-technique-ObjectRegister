@@ -29,9 +29,10 @@ def reloadCapture():
 	else:
 		return webcam()
 
-def CaptureLoop(callback):
+def CaptureLoop(callback,delay=0):
 	cap = None
 	while True:
+		time.sleep(delay)
 		cv2.waitKey(1)
 		while cap is None:
 			cap = reloadCapture()

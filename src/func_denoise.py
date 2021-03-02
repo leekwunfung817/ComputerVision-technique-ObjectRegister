@@ -34,14 +34,15 @@ def fillBlack(img,reference=None):
 	return ret
 
 # for gray only
-kernel = np.ones((10,10),np.uint8)
+kernel = np.ones((9,9),np.uint8)
 def Filtering(thresh):
 	# pixels make smaller then enlarge
-	cv2.imshow('a thresh',thresh)
-	thresh = cv2.erode(thresh,kernel,iterations=1)
-	cv2.imshow('b thresh',thresh)
-	thresh = cv2.dilate(thresh,kernel,iterations=15)
-	cv2.imshow('c thresh',thresh)
+	# cv2.imshow('a thresh',thresh)
+	thresh = cv2.erode(thresh,kernel,iterations=2)
+	# cv2.imshow('b thresh',thresh)
+	thresh = cv2.dilate(thresh,kernel,iterations=30)
+	# thresh = cv2.erode(thresh,kernel,iterations=10)
+	# cv2.imshow('c thresh',thresh)
 	# thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
 	
 	

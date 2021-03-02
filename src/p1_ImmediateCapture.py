@@ -15,15 +15,15 @@ def IsMoving(var):
 	
 	# print('Received capture:',img)
 	objs = func_ImgDiff.compareForMovementData(var['pre_bg'],var['frame'],var['com'],config['p2_dilate_enlarge'],config['p1_minDiff'])
-	(originRect,filteredAlpha,moveMask,moving_objects) = objs
+	(originRect,filteredAlpha,moveMask,objs_coor) = objs
 	# cv2.imshow('OnCapture - originRect',originRect)
 	# cv2.imshow('OnCapture - moveMask',moveMask)
 	if config['p1_demo']:
 		cv2.imshow('p1 color',cv2.hconcat([originRect,filteredAlpha]))
 		cv2.imshow('p1 gray',cv2.hconcat([moveMask]))
 
-	if config['p1_debug_var']: func_any.log('P1.IsMoving('+str(len(moving_objects))+')')
-	return len(moving_objects) > 0
+	if config['p1_debug_var']: func_any.log('P1.IsMoving('+str(len(objs_coor))+')')
+	return len(objs_coor) > 0
 
 def process(var):
 	config['process']=1

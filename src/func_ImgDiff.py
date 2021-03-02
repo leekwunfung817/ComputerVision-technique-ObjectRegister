@@ -28,19 +28,22 @@ def isSeemDiff(img1, img2,reverse=False):
 
 def ObjectRecting(origin,thresh):
 	frame = origin.copy()
-	objs = []
+	# objs = []
+
 	cnts = cv2.findContours(thresh, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 	cnts = imutils.grab_contours(cnts)
 	i=0
+	objs_coor = []
 	for c in cnts:
 		# compute the bounding box for the contour, draw it on the frame,
 		# and update the text
 		(x, y, w, h) = cv2.boundingRect(c)
 		cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-		objs.append(origin[y:y+h,x:x+w])
+		# objs.append(origin[y:y+h,x:x+w])
+		objs_coor.append((x, y, w, h, origin[y:y+h,x:x+w]))
 		text = "Occupied"
 		i+=1
-	return (frame,objs)
+	return (frame,objs_coor)
 
 # pre-define function
 def diffWithBGArray(frame,background, inverse):
@@ -97,15 +100,15 @@ def diffPixel(bg,com,minDiff,inverseDiff):
 	return colorMask,rgbDiffMask,greyDiffMask,True
 
 def MovObjAnalyse(com,diff,enlargeSize):
-	cv2.imshow('bb',diff)
+	# cv2.imshow('bb',diff)
 	diff = func_denoise.Filtering(diff)
 	diff = func_denoise.BiggerPixels(diff,enlargeSize)
-	cv2.imshow('bb',diff)
+	# cv2.imshow('bb',diff)
 	
 
-	originRect,objs = ObjectRecting(com,diff)
+	originRect,objs_coor = ObjectRecting(com,diff)
 	filteredAlpha = cv2.bitwise_and(com, com, mask=diff)
-	return (originRect,filteredAlpha,diff,objs)
+	return (originRect,filteredAlpha,diff,objs_coor)
 
 def compareForMovementData(background,frame,com,enlargeSize,movementMinimum):
 	mask=[]
@@ -119,8 +122,8 @@ def compareForMovementData(background,frame,com,enlargeSize,movementMinimum):
 	
 
 	if is_moving:
-		(originRect,filteredAlpha,diff,objs) = MovObjAnalyse(com,diff,enlargeSize)
-		return (originRect,filteredAlpha,diff,objs)
+		(originRect,filteredAlpha,diff,objs_coor) = MovObjAnalyse(com,diff,enlargeSize)
+		return (originRect,filteredAlpha,diff,objs_coor)
 	else:
 		# is not moving
 		black_img=func_denoise.fillBlack(frame)
