@@ -93,7 +93,17 @@ def HaveObject(var):
 	# last frame coor [ID](brfore coor,after coor)
 	# history [ID](brfore coor,after coor,distance,direction)
 	
-	centerCoors = p21_CoorAnalyse.run(var,objs_coor)
+	p21_CoorAnalyse.run(var,objs_coor)
+
+# history var['movingCoor'] {
+# 	ID { 
+# 		lostTime('lt'):0 , 
+# 		records('r'):[{ centerCoor:(x,y) },{ centerCoor (x,y), dis, dir },...], 
+# 		lastCenter('lc'):(x,y) 
+# 	},
+# 	...
+# }
+
 	if config['p2_demo']:
 		cv2.imshow('HaveObject - originRect',originRect)
 		cv2.imshow('HaveObject - moveMask',objectMask)

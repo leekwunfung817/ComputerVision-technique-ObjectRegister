@@ -13,8 +13,10 @@ import json
 # 	ID { lostTime('lt'):0 , records('r'):[{ centerCoor:(x,y) },{ centerCoor (x,y), dis, dir },...], lastCenter('lc'):(x,y) },
 # 	...
 # }
+
 totalMoveDebug = True
 wholeMoveDebug = False
+
 def OnObjectAppear(var,movingData,ID):
 	if wholeMoveDebug:
 		print('OnObjectAppear ',json.dumps(movingData, indent=4, sort_keys=True))
@@ -34,8 +36,10 @@ def OnObjectDisappear(var,movingData,ID):
 	if wholeMoveDebug:
 		print('OnObjectDisappear ',json.dumps(movingData, indent=4, sort_keys=True))
 	if totalMoveDebug:
-		totalDir = getDirectionDes(getDirection(movingData['r'][0],movingData['lc']))
-		totalDis = distanCoor(movingData['r'][0],movingData['lc'])
+		begin = movingData['r'][0][0]
+		last = movingData['lc']
+		totalDir = getDirectionDes(getDirection(begin,last))
+		totalDis = distanCoor(begin,last)
 		print('OnObjectDisappear ',json.dumps(movingData, indent=4, sort_keys=True),totalDir,totalDis)
 	pass
 
@@ -120,7 +124,7 @@ def processNewCenter(var,centerCoor):
 		new_id=func_any.dts()
 		var['movingCoor'][new_id] = {
 			'lt':0,
-			'r':[centerCoor],
+			'r':[(centerCoor,0,0)],
 			'lc':centerCoor
 		}
 		OnObjectAppear(var,var['movingCoor'][new_id],new_id)
@@ -158,14 +162,41 @@ def processLostCenter(var,moveIDs):
 				OnObjectDisappear(var,var['movingCoor'][ID],ID)
 				var['movingCoor'].pop(ID,None)
 
+def drawDemo(var):
+	demoImage = None
+	if var['movingCoor'] is not None:
+		historyIDs = list(var['movingCoor'].keys())
+		for ID in historyIDs:
+			records = var['movingCoor'][ID]['r']
+			for recordIndex in range(1,len(records)):
+				fro = records[recordIndex-1][0]
+				to = records[recordIndex][0]
+				print(fro,to)
+				(frox,froy) = fro
+				(tox,toy) = to
+				fro = (int(frox),int(froy))
+				to = (int(tox),int(toy))
+				print(fro, to)
+				demoImage = cv2.line((var['frame'] if demoImage is None else demoImage), fro, to, (0, 255, 0), thickness = 3)
+	if demoImage is not None:
+		cv2.imshow('CoorAnalyse:', demoImage)
+	pass
 
 def processNewCentersFroFrame(var,objs_coor):
 	moveIDs = getCurrentMovingIDs(var,objs_coor)
 	processLostCenter(var,moveIDs)
+	drawDemo(var)
 	return var['movingCoor']
 	# 	pass
 
-
+# history var['movingCoor'] {
+# 	ID { 
+# 		lostTime('lt'):0 , 
+# 		records('r'):[{ centerCoor:(x,y) },{ centerCoor (x,y), dis, dir },...], 
+# 		lastCenter('lc'):(x,y) 
+# 	},
+# 	...
+# }
 def run(var,objs_coor):
 	return processNewCentersFroFrame(var,objs_coor)
 
