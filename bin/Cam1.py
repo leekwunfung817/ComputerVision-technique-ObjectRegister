@@ -25,12 +25,14 @@ config['p2_debug_flow']=False
 config['p2_debug_var']=False
 config['p2_demo']=True
 
-config['p2_minDiff']=15
+config['p2_minDiff']=10
 
 config['p2_dilate_enlarge']=300
 
-config['backgroundMovementTimeout']=3
+config['backgroundMovementTimeout']=9
 config['backgroundPerCapture']=3
+
+config['coorMaxDistan']=200
 
 # p3
 config['p3']=False
