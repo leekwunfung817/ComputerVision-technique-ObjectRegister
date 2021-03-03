@@ -8,6 +8,8 @@ app_name = py_name.replace('.pyc','').replace('.py','')
 exec('import '+app_name)
 exec('config = '+app_name+'.config')
 
+import func_colorArea
+
 import json
 # history var['movingCoor'] {
 # 	ID { lostTime('lt'):0 , records('r'):[{ centerCoor:(x,y) },{ centerCoor (x,y), dis, dir },...], lastCenter('lc'):(x,y) },
@@ -33,22 +35,26 @@ def OnObjectDisappearTimeout(var,movingData,ID):
 	pass
 
 def OnObjectDisappear(var,movingData,ID):
+
 	if wholeMoveDebug:
 		print('OnObjectDisappear ',json.dumps(movingData, indent=4, sort_keys=True))
+
 	if totalMoveDebug:
 		begin = movingData['r'][0][0]
 		last = movingData['lc']
 		totalDir = getDirectionDes(getDirection(begin,last))
 		totalDis = distanCoor(begin,last)
-		print('OnObjectDisappear ',json.dumps(movingData, indent=4, sort_keys=True),totalDir,totalDis)
-	pass
+
+		froArea = func_colorArea.isPointInArea(var,begin)
+		toArea = func_colorArea.isPointInArea(var,last)
+		if totalDis>config['coorMinTotalDistan']:
+			print('OnObjectDisappear:',json.dumps(movingData, indent=4, sort_keys=True),totalDir,totalDis)
+			print('OnObjectDisappear Area:',' from: ',froArea,' to: ',toArea)
 
 def distanCoor(p1,p2):
-	# print((p1,p2))
 	(x1,y1)=p1
 	(x2,y2)=p2
 	distance = math.sqrt( ((x2-x1)**2)+((y2-y1)**2) )
-	# print('Count distance ',p1,p2,' = ',distance)
 	return distance
 
 def getDirectionDes(des):

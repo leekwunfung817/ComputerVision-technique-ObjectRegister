@@ -18,6 +18,9 @@ https://github.com/leekwunfung817/ComputerVision-technique-ObjectRegister
 
 '''
 
+
+
+
 import sys
 sys.path.insert(1, '../bin')
 py_name = sys.argv[0]
@@ -28,6 +31,27 @@ exec('import '+app_name)
 exec('config = '+app_name+'.config')
 import func_denoise
 import os
+
+
+
+from uuid import getnode as get_mac
+def checkLicense():
+	pass
+	mac = get_mac()
+	if config['lc1']=='Ivan':
+		print(mac)
+	mac = hex(mac)
+	mac = str(mac)
+	if config['lc2']=='Lee':
+		print(mac)
+	if open("license.txt", "r").read()==mac:
+		print('License granted!')
+	else:
+		print('License refused!')
+		exit()
+checkLicense()
+
+
 
 # print("Python version")
 # print (sys.version)
@@ -81,6 +105,8 @@ var['mvBg'] = {}
 var['lastMvBg'] = None
 
 
+import func_colorArea
+var['IDMasks'] = func_colorArea.getIndexMasks(config['id_position'])
 
 import func_camera
 
