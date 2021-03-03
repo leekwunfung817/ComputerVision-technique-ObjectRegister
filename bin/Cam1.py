@@ -1,6 +1,8 @@
 import cv2
 import sys
 sys.path.insert(1, '../src')
+# sys.path.insert(1, '../compiled')
+
 app_name = sys.argv[0].replace('.py','')
 global config
 config = {}
@@ -33,6 +35,7 @@ config['backgroundMovementTimeout']=9
 config['backgroundPerCapture']=3
 
 config['coorMaxDistan']=200
+config['coorMinTotalDistan']=100
 
 # p3
 config['p3']=False
@@ -57,14 +60,23 @@ config['ignore']=cv2.imread(app_name+'.ignore.png')
 
 config['id_position']=cv2.imread(app_name+'.id_position.png')
 
+
+# show before license 
+config['lc1']=None
+
+# show license
+config['lc2']=None
+
+# config['lc1']='Ivan'
+# config['lc2']='Lee'
+
 import app
 
 '''
+cd /Users/leekwunfung/Desktop/CPOS/
+python3 -m compileall -b ObjExtractor
 
-cd /Users/leekwunfung/Desktop/CPOS/ObjExtractor/bin 
+cd ObjExtractor/bin 
 python3 Cam1.py
-
-cd /Users/leekwunfung/Desktop/ObjExtractor_/bin
-python3 Cam1.pyc
 
 '''
