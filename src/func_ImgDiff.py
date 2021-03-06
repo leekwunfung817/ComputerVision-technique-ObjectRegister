@@ -1,8 +1,4 @@
 '''
-pip install --upgrade opencv-python
-pip install --upgrade matplotlib
-pip install imutils
-pip install --upgrade imutils
 cd /Users/leekwunfung/Desktop/ObjExtractor
 python3 app.py
 

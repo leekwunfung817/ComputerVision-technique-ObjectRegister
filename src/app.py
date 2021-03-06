@@ -1,5 +1,6 @@
 
 '''
+
 cd /Users/leekwunfung/Desktop/ObjExtractor/src
 python -m compileall
 python3 app.py
@@ -11,7 +12,12 @@ Version info.
 sys.version_info(major=3, minor=6, micro=4, releaselevel='final', serial=0)
 app_name Cam1
 
-pip install matplotlib==3.0.3
+python -m pip install matplotlib==3.0.3
+python -m pip install --upgrade opencv-python
+python -m pip install --upgrade matplotlib
+python -m pip install imutils
+python -m pip install --upgrade imutils
+python -m pip install numpy
 
 https://www.python.org/downloads/release/python-364/
 https://github.com/leekwunfung817/ComputerVision-technique-ObjectRegister
