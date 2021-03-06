@@ -13,6 +13,21 @@ config['debug_flow']=False
 
 config['debug_video']=False
 
+config['db']={
+	'host':'127.0.0.1',
+	# 'host':'127.0.0.1:3306',
+	'user':'root',
+	'password':'',
+	'database':'ai'
+}
+# config['db'] = None
+
+config['socket']={
+	'ip':'127.0.0.1',
+	'port':1234
+}
+config['socket']=None
+
 # p1
 config['p1']=True
 config['p1_debug_flow']=False
@@ -23,9 +38,9 @@ config['p1_minDiff']=30
 
 # p2
 config['p2']=True
-config['p2_debug_flow']=False
+config['p2_debug_flow']=True
 config['p2_debug_var']=False
-config['p2_demo']=True
+config['p2_demo']=False
 
 config['p2_minDiff']=10
 
