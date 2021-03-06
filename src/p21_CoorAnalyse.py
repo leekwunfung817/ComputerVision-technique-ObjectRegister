@@ -2,6 +2,8 @@ import cv2
 import math
 import func_any
 
+import func_apis
+
 import sys
 py_name = sys.argv[0]
 app_name = py_name.replace('.pyc','').replace('.py','')
@@ -42,14 +44,23 @@ def OnObjectDisappear(var,movingData,ID):
 	if totalMoveDebug:
 		begin = movingData['r'][0][0]
 		last = movingData['lc']
-		totalDir = getDirectionDes(getDirection(begin,last))
+		# drawMovingCoor(begin,last)
+		# demoImage = drawMovingLines(var)
+
+		totalDirCode = getDirection(begin,last)
+		totalDir = getDirectionDes(totalDirCode)
 		totalDis = distanCoor(begin,last)
 
 		froArea = func_colorArea.isPointInArea(var,begin)
 		toArea = func_colorArea.isPointInArea(var,last)
+
+		if config['socket'] is not None:
+			func_apis.socket( config['socket']['ip'] , config['socket']['port'] , totalDirCode+";"+froArea+";"+toArea)
+
 		if totalDis>config['coorMinTotalDistan']:
 			print('OnObjectDisappear:',json.dumps(movingData, indent=4, sort_keys=True),totalDir,totalDis)
 			print('OnObjectDisappear Area:',' from: ',froArea,' to: ',toArea)
+			var['lo'] = { 'begin':str(begin[0])+','+str(begin[1]) , 'last':str(last[0])+','+str(last[1]) , 'froArea':froArea, 'toArea':toArea }
 
 def distanCoor(p1,p2):
 	(x1,y1)=p1
@@ -70,6 +81,17 @@ def getDirectionDes(des):
 	if des=='14':return 'left-down'
 	if des=='23':return 'right-up'
 	if des=='24': return 'right-down'
+
+def getAngle(p1,p2):
+	(p1x,p1y) = p1
+	(p2x,p2y) = p2
+	dy = p1y - p2y
+	dx = p2x - p1x
+	rads = math.atan2(dy,dx)
+	degs = math.degrees(rads)
+	return degs
+	# if degs < 0 :
+	# 	degs +=90
 
 def getDirection(fro,to):
 
@@ -155,7 +177,20 @@ def getCurrentMovingIDs(var,objs_coor):
 		if not isNew:
 			moveIDs.append(ID)
 	return moveIDs
-	
+
+import func_sql
+
+func_sql.query("""
+CREATE TABLE IF NOT EXISTS t_coorMov
+(
+	`begin` VARCHAR(25) NOT NULL,
+	`last` VARCHAR(25) NOT NULL,
+	`froArea` VARCHAR(20),
+	`toArea` VARCHAR(20),
+	`creation_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT coorPK PRIMARY KEY (creation_date)
+)
+""",config)
 
 def processLostCenter(var,moveIDs):
 	historyIDs = list(var['movingCoor'].keys())
@@ -165,11 +200,44 @@ def processLostCenter(var,moveIDs):
 				var['movingCoor'][ID]['lt']+=1
 				OnObjectDisappearTimeout(var,var['movingCoor'][ID],ID)
 			else:
+				var['lo'] = None
 				OnObjectDisappear(var,var['movingCoor'][ID],ID)
 				var['movingCoor'].pop(ID,None)
+				if var['lo'] is not None:
+					begin = var['lo']['begin']
+					last = var['lo']['last']
+					froArea = var['lo']['froArea']
+					toArea = var['lo']['toArea']
+					func_sql.query(f""" INSERT INTO t_coorMov (`begin`,`last`,`froArea`,`toArea`) VALUES ('{begin}','{last}','{froArea}','{toArea}') """,config)
+					pass
+				
 
-def drawDemo(var):
-	demoImage = None
+def drawMovingCoor(var,demoImage=None):
+	demoImage = (var['frame'] if demoImage is None else demoImage)
+	if var['movingCoor'] is not None:
+		historyIDs = list(var['movingCoor'].keys())
+		for ID in historyIDs:
+			movingData = var['movingCoor'][ID]
+
+			begin = movingData['r'][0][0]
+			(x,y)=begin
+			begin=(int(x),int(y))
+			last = movingData['lc']
+			(x,y)=last
+			last=(int(x),int(y))
+
+			# demoImage = (var['frame'] if demoImage is None else demoImage)
+
+			totalDirCode = getDirection(begin,last)
+			totalDir = getDirectionDes(totalDirCode)
+
+			demoImage = cv2.arrowedLine(demoImage, begin, last, (0, 255, 0), 3) 
+			cv2.putText(demoImage, totalDir, last, cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 1, cv2.LINE_AA)
+
+	return demoImage
+
+def drawMovingLines(var,demoImage = None):
+	demoImage = (var['frame'] if demoImage is None else demoImage)
 	if var['movingCoor'] is not None:
 		historyIDs = list(var['movingCoor'].keys())
 		for ID in historyIDs:
@@ -177,29 +245,33 @@ def drawDemo(var):
 			for recordIndex in range(1,len(records)):
 				fro = records[recordIndex-1][0]
 				to = records[recordIndex][0]
-				print(fro,to)
+				# print(fro,to)
 				(frox,froy) = fro
 				(tox,toy) = to
 				fro = (int(frox),int(froy))
 				to = (int(tox),int(toy))
-				print(fro, to)
-				demoImage = cv2.line((var['frame'] if demoImage is None else demoImage), fro, to, (0, 255, 0), thickness = 3)
-	if demoImage is not None:
-		cv2.imshow('CoorAnalyse:', demoImage)
+				# print(fro, to)
+				
+				demoImage = cv2.line(demoImage, fro, to, (0, 255, 0), thickness = 3)
+	return demoImage
 	pass
 
 def processNewCentersFroFrame(var,objs_coor):
 	moveIDs = getCurrentMovingIDs(var,objs_coor)
 	processLostCenter(var,moveIDs)
-	drawDemo(var)
+	demoImage = drawMovingLines(var)
+	demoImage = drawMovingCoor(var,demoImage)
+	if demoImage is not None:
+		cv2.imshow('CoorAnalyse:', demoImage)
 	return var['movingCoor']
 	# 	pass
 
 # history var['movingCoor'] {
 # 	ID { 
-# 		lostTime('lt'):0 , 
+# 		lostTime('lt'):0,
 # 		records('r'):[{ centerCoor:(x,y) },{ centerCoor (x,y), dis, dir },...], 
-# 		lastCenter('lc'):(x,y) 
+# 		lastCenter('lc'):(x,y),
+# 		lostObj('lo'):
 # 	},
 # 	...
 # }

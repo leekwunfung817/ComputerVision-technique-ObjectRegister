@@ -44,20 +44,22 @@ def firstCapture(var):
 	# allow pass
 def delayCapture(var):
 	if config['p2_debug_flow']:
-		func_any.log('P2.4.Capture too high frequent, timeout at '+str(config['backgroundPerCapture']-(time.time() - var['lastCaptureTime']))+' second')
+		func_any.log('P2.4.Capture delayed, timeout at '+str(config['backgroundPerCapture']-(time.time() - var['lastCaptureTime']))+' second')
 	return False
 def delayTimeoutCapture(var):
 	var['lastCaptureTime'] = None
-	if config['p2_debug_flow']:
-		func_any.log('P2.3.Capture correctly, background len:'+str(len(var['background'])))
 	var['lastCaptureTime'] = time.time()
-	if len(var['background'])>=4:
+	if len(var['background'])>=3:
 		# cv2.imwrite('bg/'+func_any.dts()+'.jpg', var['background'][0])
 		var['background'] = var['background'][1:]
 	# print('bgl:',len(var['background']))
+
 	var['background'].append(var['frame'])
 	# func_any.log('3.1. background len:'+str(len(var['background'])))
 	# allow pass
+
+	if config['p2_debug_flow']:
+		func_any.log('P2.3.Capture correctly, background len:'+str(len(var['background'])))
 
 # (Process 2) run when buffer have three background images. Only for stopped stage.
 def accumulateBackgroundCapturing(var):
@@ -94,6 +96,7 @@ def HaveObject(var):
 	# history [ID](brfore coor,after coor,distance,direction)
 	
 	p21_CoorAnalyse.run(var,objs_coor)
+	print('Moving Objects:',len(var['movingCoor']))
 
 # history var['movingCoor'] {
 # 	ID { 
