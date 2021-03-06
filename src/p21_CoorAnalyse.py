@@ -132,15 +132,9 @@ def getHistoryIDByNewCenter(var,centerCoor):
 			dirCode = getDirection(centerCur,centerCoor)
 			direct = getDirectionDes(dirCode)
 			if nearestDistance is None:
-				nearestDistance = distance
-				nearestCenter = centerCur
-				nearestDirect = direct
-				nearestID = ID
+				(nearestDistance,nearestCenter,nearestDirect,nearestID) = (distance,centerCur,direct,ID)
 			elif distance<nearestDistance:
-				nearestID = ID
-				nearestCenter = centerCur
-				nearestDistance = distance
-				nearestDirect = direct
+				(nearestDistance,nearestCenter,nearestDirect,nearestID) = (distance,centerCur,direct,ID)
 	if nearestID is None:
 		return None
 	return (nearestID,nearestCenter,nearestDistance,nearestDirect)
@@ -261,6 +255,7 @@ def processNewCentersFroFrame(var,objs_coor):
 	processLostCenter(var,moveIDs)
 	demoImage = drawMovingLines(var)
 	demoImage = drawMovingCoor(var,demoImage)
+	func_video.WriteVideo2(var,demoImage,'CoorAna')
 	if demoImage is not None:
 		cv2.imshow('CoorAnalyse:', demoImage)
 	return var['movingCoor']
