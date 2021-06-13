@@ -48,16 +48,19 @@ def receiveBytes(conn):
 
 def capture(HOST,PORT,callback):
 	while True:
-		with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-			print(HOST,PORT)
-			s.bind((HOST, PORT))
-			s.listen()
-			print('Accept')
-			conn, addr = s.accept()
-			print('Connected by', addr)
-			with conn:
-				fdata = receiveBytes(conn)
-				if fdata is not None:
-					decoded = byte2CVImg(fdata)
-					callback(decoded)
-					# conn.sendall('AB1234'.encode())
+		try:
+			with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+				print(HOST,PORT)
+				s.bind((HOST, PORT))
+				s.listen()
+				print('Accept')
+				conn, addr = s.accept()
+				print('Connected by', addr)
+				with conn:
+					fdata = receiveBytes(conn)
+					if fdata is not None:
+						decoded = byte2CVImg(fdata)
+						callback(decoded)
+						# conn.sendall('AB1234'.encode())
+		except Exception as e:
+			raise e
