@@ -20,7 +20,7 @@ config['db']={
 	'password':'',
 	'database':'ai'
 }
-# config['db'] = None
+config['db'] = None
 
 config['socket']={
 	'ip':'127.0.0.1',
@@ -32,7 +32,7 @@ config['socket']=None
 config['p1']=True
 config['p1_debug_flow']=False
 config['p1_debug_var']=False
-config['p1_demo']=False
+config['p1_demo']=True
 
 config['p1_minDiff']=30
 
@@ -54,12 +54,17 @@ config['coorMinTotalDistan']=100
 
 # p3
 config['p3']=False
-config['p3_debug']=False
+config['p3_debug']=True
 config['BgMode_MoveCapture']=True
 
 # func_camera
-config['isIPCam']=0
+# config['Capture']='WebCamera'
+# config['Capture']='IPCamera'
+config['Capture']='TCPServer'
 config['ip_cam']='rtsp://admin:@192.168.1.197'
+config['TCPCamIP']='127.0.0.1'
+config['TCPCamPort']=65432
+
 
 # func_video
 config['debug_saveVideo']=False

@@ -42,7 +42,6 @@ import os
 
 from uuid import getnode as get_mac
 def checkLicense():
-	pass
 	mac = get_mac()
 	if config['lc1']=='Ivan':
 		print(mac)
@@ -117,22 +116,27 @@ var['IDMasks'] = func_colorArea.getIndexMasks(config['id_position'])
 import func_camera
 
 def OnCapture(frame):
-	if not os.path.isfile('curDemo.png'):
-		cv2.imwrite('curDemo.png',frame)
-	frame = cv2.bitwise_and(frame,config['ignore'])
+	try:
+		cv2.waitKey(1)
+		cv2.imshow('frame',frame)
+		if not os.path.isfile('curDemo.png'):
+			cv2.imwrite('curDemo.png',frame)
+		frame = cv2.bitwise_and(frame,config['ignore'])
 
-	# Step 1 - receive camera capture ( current python t1.py run() )
-	var['frame'] = frame
-	(h,w,d)=frame.shape
-	frame = func_denoise.GaussianBlur(frame)
+		# Step 1 - receive camera capture ( current python t1.py run() )
+		var['frame'] = frame
+		(h,w,d)=frame.shape
+		frame = func_denoise.GaussianBlur(frame)
 
-	# for background array appending (situation: start up)
-	# initialise the background buffer
-	if config['p1']:
-		p1_ImmediateCapture.process(var)
-	if config['p2']:
-		p2_StaticCapture.process(var)
-	if config['p3']:
-		p3_MvCapture.process(var)
+		# for background array appending (situation: start up)
+		# initialise the background buffer
+		if config['p1']:
+			p1_ImmediateCapture.process(var)
+		if config['p2']:
+			p2_StaticCapture.process(var)
+		if config['p3']:
+			p3_MvCapture.process(var)
+	except Exception as e:
+		print(e)
 
 func_camera.CaptureLoop(OnCapture,0.3)

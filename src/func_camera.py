@@ -7,8 +7,10 @@ exec('config = '+app_name+'.config')
 import time
 import cv2
 import func_any
+import TCPClientCamera
 
 fail_count = 0
+
 def IPCam():
 	'''
 "C:/Users/Administrator/AppData/Local/Programs/Python/Python36/python" app.py
@@ -24,25 +26,29 @@ def webcam():
 
 
 def reloadCapture():
-	if config['isIPCam']>0:
+	if config['Capture']=='IPCamera':
 		return IPCam()
 	else:
 		return webcam()
 
 def CaptureLoop(callback,delay=0):
 	cap = None
-	while True:
-		time.sleep(delay)
-		cv2.waitKey(1)
-		while cap is None:
-			cap = reloadCapture()
-		okay, frame = cap.read()
-		if not okay:
-			time.sleep(3)
-			cap = reloadCapture()
-			continue
-		callback(frame)
-		if not okay:
-			fail_count+=1
-			if fail_count==3:
-				exit()
+	if config['Capture']=='TCPServer':
+		return TCPClientCamera.capture(config['TCPCamIP'],config['TCPCamPort'],callback)
+	else:
+		while True:
+			time.sleep(delay)
+			cv2.waitKey(1)
+			while cap is None:
+				cap = reloadCapture()
+			okay, frame = cap.read()
+			if not okay:
+				print('Capture fail')
+				time.sleep(3)
+				cap = reloadCapture()
+				continue
+			callback(frame)
+			if not okay:
+				fail_count+=1
+				if fail_count==3:
+					exit()
