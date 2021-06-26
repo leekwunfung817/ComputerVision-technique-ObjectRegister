@@ -53,7 +53,7 @@ def checkLicense():
 		print('License granted!')
 	else:
 		print('License refused!')
-		exit()
+		# exit()
 checkLicense()
 
 
