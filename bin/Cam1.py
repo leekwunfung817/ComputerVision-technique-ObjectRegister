@@ -32,7 +32,7 @@ config['socket']=None
 config['p1']=True
 config['p1_debug_flow']=False
 config['p1_debug_var']=False
-config['p1_demo']=True
+config['p1_demo']=False
 
 config['p1_minDiff']=30
 
